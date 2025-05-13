@@ -1,4 +1,6 @@
 // Import necessary functions and constants from the Solana web3.js and SPL Token packages
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { setAuthority } from "@solana/spl-token";
 import * as web3 from "@solana/web3.js";
 import * as bs58 from "bs58";
 import dotenv from "dotenv";
@@ -10,6 +12,7 @@ export const RPC_URL =
     : "https://api.devnet.solana.com";
 // Initialize connection to local Solana node
 export const connection = new web3.Connection(RPC_URL, "confirmed");
+export const METADATA_URL = process.env.METADATA_URL || 'https://your-metadata.json'
 
 // Generate keys for payer, mint authority, and mint
 export const payer = web3.Keypair.fromSecretKey(Uint8Array.from(bs58.decode(process.env.PRIVATE_KEY)));
@@ -24,4 +27,22 @@ export function generateExplorerTxUrl(txId: string) {
     return `https://explorer.solana.com/tx/${txId}`;
   }
   return `https://explorer.solana.com/tx/${txId}?cluster=devnet`;
+}
+
+
+export async function revokeFreezeAuthority(payer, tokenProgram) {
+  // Revoke the freeze authority
+  const signature = await setAuthority(
+    connection,
+    payer,
+    mint,
+    payer.publicKey,
+    1,
+    null,
+    [],
+    undefined,
+    tokenProgram
+  );
+
+  console.log("txHash: ", signature);
 }

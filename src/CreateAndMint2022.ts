@@ -29,11 +29,13 @@ import {
   createInitializeNonTransferableMintInstruction,
 } from "@solana/spl-token";
 
-import { connection, generateExplorerTxUrl, payer } from "./utils";
-import { revokeFreezeAuthority } from "./CreateAndMintLegacy";
+import {
+  connection,
+  generateExplorerTxUrl,
+  payer,
+  revokeFreezeAuthority,
+} from "./utils";
 
-// const payer = Keypair.generate();
-// const mintAuthority = Keypair.generate();
 const mintAuthority = payer;
 const mintKeypair = Keypair.generate();
 const mint = mintKeypair.publicKey;
@@ -69,7 +71,9 @@ async function main() {
   // await connection.confirmTransaction({ signature: airdropSignature, ...(await connection.getLatestBlockhash()) });
 
   // Step 2 - Create a New Token
-  const mintLamports = await connection.getMinimumBalanceForRentExemption(mintLen);
+  const mintLamports = await connection.getMinimumBalanceForRentExemption(
+    mintLen
+  );
   const mintTransaction = new Transaction().add(
     SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
@@ -86,12 +90,22 @@ async function main() {
       maxFee,
       TOKEN_2022_PROGRAM_ID
     ),
-    // createInitializeNonTransferableMintInstruction(mint, TOKEN_2022_PROGRAM_ID),
-    createInitializeMintInstruction(mint, decimals, mintAuthority.publicKey, null, TOKEN_2022_PROGRAM_ID)
+    createInitializeMintInstruction(
+      mint,
+      decimals,
+      mintAuthority.publicKey,
+      null,
+      TOKEN_2022_PROGRAM_ID
+    )
   );
-  const newTokenTx = await sendAndConfirmTransaction(connection, mintTransaction, [payer, mintKeypair], undefined);
+  const newTokenTx = await sendAndConfirmTransaction(
+    connection,
+    mintTransaction,
+    [payer, mintKeypair],
+    undefined
+  );
   console.log("New Token Created:", generateExplorerTxUrl(newTokenTx));
-  console.log("Mint: ", mintKeypair);
+  console.log("Mint: ", mintKeypair.publicKey.toString());
 
   // Step 3 - Mint tokens to Owner
   // const owner = Keypair.generate();
@@ -188,7 +202,7 @@ async function main() {
   */
 
   // Step 7 - revoke freeze authority
-  revokeFreezeAuthority();
+  // revokeFreezeAuthority(payer, TOKEN_2022_PROGRAM_ID);
 }
 
 // Execute the main function

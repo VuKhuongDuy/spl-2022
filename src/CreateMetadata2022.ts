@@ -18,22 +18,26 @@ import {
   createSignerFromKeypair,
   none,
   percentAmount,
-  publicKey,
   signerIdentity,
   some,
 } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
+import {
+  fromWeb3JsKeypair,
+  fromWeb3JsPublicKey,
+} from "@metaplex-foundation/umi-web3js-adapters";
 import * as bs58 from "bs58";
-import { payer, mint, RPC_URL } from "./utils";
+import { payer, mint, RPC_URL, generateExplorerTxUrl, METADATA_URL } from "./utils";
 import metadataJson from "../metadata/spl.json";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
-const INITIALIZE = false;
+const INITIALIZE = true;
 
 export function loadWalletKey(keypairFile: string): web3.Keypair {
   const fs = require("fs");
-  const loaded = web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keypairFile).toString())));
+  const loaded = web3.Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(fs.readFileSync(keypairFile).toString()))
+  );
   return loaded;
 }
 
@@ -50,7 +54,7 @@ async function main() {
   const ourMetadata = {
     name: metadataJson.name,
     symbol: metadataJson.symbol,
-    uri: "https://raw.githubusercontent.com/VuKhuongDuy/spl-2022/refs/heads/main/metadata/spl.json",
+    uri: METADATA_URL,
   };
   console.log(mint.toBase58());
 
@@ -79,7 +83,9 @@ async function main() {
       decimals: none<number>(),
       printSupply: none<PrintSupply>(),
     };
-    const txid = await createV1(umi, { ...accounts, ...data }).sendAndConfirm(umi);
+    const txid = await createV1(umi, { ...accounts, ...data }).sendAndConfirm(
+      umi
+    );
     console.log("txhash:", bs58.encode(txid.signature));
   } else {
     const onChainData = {
@@ -97,8 +103,10 @@ async function main() {
       data: some<Data>(onChainData),
       updateV1Discriminator: 0,
     };
-    const txid = await updateV1(umi, { ...accounts, ...data }).sendAndConfirm(umi);
-    console.log("txhash:", bs58.encode(txid.signature));
+    const txid = await updateV1(umi, { ...accounts, ...data }).sendAndConfirm(
+      umi
+    );
+    console.log("txhash:", generateExplorerTxUrl(bs58.encode(txid.signature)));
   }
 }
 
