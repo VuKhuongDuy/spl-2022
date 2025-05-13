@@ -29,7 +29,8 @@ import {
   createInitializeNonTransferableMintInstruction,
 } from "@solana/spl-token";
 
-import { connection, payer } from "./utils";
+import { connection, generateExplorerTxUrl, payer } from "./utils";
+import { revokeFreezeAuthority } from "./CreateAndMintLegacy";
 
 // const payer = Keypair.generate();
 // const mintAuthority = Keypair.generate();
@@ -60,11 +61,6 @@ const transferAmount = BigInt(1_000 * Math.pow(10, decimals)); // Transfer 1,000
 // Calculate the fee for the transfer
 const calcFee = (transferAmount * BigInt(feeBasisPoints)) / BigInt(10_000); // expect 10 fee
 const fee = calcFee > maxFee ? maxFee : calcFee; // expect 9 fee
-
-// Helper function to generate Explorer URL
-function generateExplorerTxUrl(txId: string) {
-  return `https://explorer.solana.com/tx/${txId}?cluster=devnet`;
-}
 
 async function main() {
   // Step 1 - Airdrop to Payer
@@ -190,6 +186,9 @@ async function main() {
   );
   console.log("Withdraw from Accounts:", generateExplorerTxUrl(withdrawSig1));
   */
+
+  // Step 7 - revoke freeze authority
+  revokeFreezeAuthority();
 }
 
 // Execute the main function

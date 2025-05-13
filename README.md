@@ -1,10 +1,3 @@
-# Create and Mint process
-
-Create your own coin on Solana easily. This repository provides resources for deploying SPL and SPL Token-2022 tokens.
-
-## Create an SPL
-
-Create an SPL and set metadata at once using `src/CreateMetadata.ts` file. Customize variables on your own.
 
 ## Create an SPL token-2022
 
@@ -45,7 +38,3 @@ If you check the mint address, you can see unrecognized token detail on explorer
    - _You can customize metadata from this script._
 
 2. Done
-
-##
-
-Happy deploying!

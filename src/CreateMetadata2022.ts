@@ -26,16 +26,16 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import * as bs58 from "bs58";
 import { payer, mint, RPC_URL } from "./utils";
+import metadataJson from "../metadata/spl.json";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
-const SPL_TOKEN_2022_PROGRAM_ID: PublicKey = publicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+const INITIALIZE = false;
 
 export function loadWalletKey(keypairFile: string): web3.Keypair {
   const fs = require("fs");
   const loaded = web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keypairFile).toString())));
   return loaded;
 }
-
-const INITIALIZE = false;
 
 async function main() {
   // Load wallet key pair from local json file
@@ -48,9 +48,9 @@ async function main() {
   umi.use(signerIdentity(signer, true));
 
   const ourMetadata = {
-    name: "Solana Gold",
-    symbol: "GOLDSOL",
-    uri: "https://raw.githubusercontent.com/solana-developers/program-examples/new-examples/tokens/tokens/.assets/spl-token.json",
+    name: metadataJson.name,
+    symbol: metadataJson.symbol,
+    uri: "https://raw.githubusercontent.com/VuKhuongDuy/spl-2022/refs/heads/main/metadata/spl.json",
   };
   console.log(mint.toBase58());
 
@@ -65,7 +65,7 @@ async function main() {
     };
     const accounts: CreateV1InstructionAccounts = {
       mint: fromWeb3JsPublicKey(mint),
-      splTokenProgram: SPL_TOKEN_2022_PROGRAM_ID,
+      splTokenProgram: fromWeb3JsPublicKey(TOKEN_2022_PROGRAM_ID),
     };
     const data: CreateV1InstructionData = {
       ...onChainData,
@@ -80,7 +80,7 @@ async function main() {
       printSupply: none<PrintSupply>(),
     };
     const txid = await createV1(umi, { ...accounts, ...data }).sendAndConfirm(umi);
-    console.log(bs58.encode(txid.signature));
+    console.log("txhash:", bs58.encode(txid.signature));
   } else {
     const onChainData = {
       ...ourMetadata,
@@ -98,7 +98,7 @@ async function main() {
       updateV1Discriminator: 0,
     };
     const txid = await updateV1(umi, { ...accounts, ...data }).sendAndConfirm(umi);
-    console.log(bs58.encode(txid.signature));
+    console.log("txhash:", bs58.encode(txid.signature));
   }
 }
 

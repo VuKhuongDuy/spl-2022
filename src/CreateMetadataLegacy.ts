@@ -3,7 +3,6 @@ import {
   CreateMetadataAccountV3InstructionAccounts,
   CreateMetadataAccountV3InstructionDataArgs,
   Creator,
-  MPL_TOKEN_METADATA_PROGRAM_ID,
   UpdateMetadataAccountV2InstructionAccounts,
   UpdateMetadataAccountV2InstructionData,
   Uses,
@@ -15,9 +14,13 @@ import * as web3 from "@solana/web3.js";
 import { PublicKey, createSignerFromKeypair, none, signerIdentity, some } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
+import fs from "fs";
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
+import metadataJson from "../metadata/spl.json";
+import { mint, payer, RPC_URL } from "./utils";
 
 export function loadWalletKey(keypairFile: string): web3.Keypair {
-  const fs = require("fs");
   const loaded = web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keypairFile).toString())));
   return loaded;
 }
@@ -25,19 +28,16 @@ export function loadWalletKey(keypairFile: string): web3.Keypair {
 const INITIALIZE = true;
 
 async function main() {
-  console.log("let's name some tokens in 2024!");
-  const myKeypair = loadWalletKey("AndyUCWqhEnEMqHAByoRSHz2mvQxdyXyki9UQ7YCrTBY.json");
-  const mint = new web3.PublicKey("SDTHBG48VGNoGS1U2ArnvMUZ3dxyGr1F4TT1ojD4QDB");
-
-  const umi = createUmi("https://api.devnet.solana.com");
-  const signer = createSignerFromKeypair(umi, fromWeb3JsKeypair(myKeypair));
+  const keypair = payer;
+  const umi = createUmi(RPC_URL);
+  const signer = createSignerFromKeypair(umi, fromWeb3JsKeypair(keypair));
   umi.use(signerIdentity(signer, true));
 
   const ourMetadata = {
     // TODO change those values!
-    name: "Silly Dragon Token",
-    symbol: "SDT",
-    uri: "https://raw.githubusercontent.com/loopcreativeandy/video-tutorial-resources/main/metadataUpdate/metadata.json",
+    name: metadataJson.name,
+    symbol: metadataJson.symbol,
+    uri: "https://your-metadata.json",
   };
   const onChainData = {
     ...ourMetadata,
