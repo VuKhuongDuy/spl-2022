@@ -1,0 +1,38 @@
+{
+  "extensions": [
+    {
+      "name": "TransferFeeConfig",
+      "description": "Enables transfer fees on token transfers",
+      "config": {
+        "feeBasisPoints": 100,
+        "maxFee": 9
+      }
+    },
+    {
+      "name": "NonTransferable",
+      "description": "Makes tokens non-transferable",
+      "config": {}
+    },
+    {
+      "name": "DefaultAccountState",
+      "description": "Sets default account state for new token accounts",
+      "config": {
+        "defaultState": "frozen"
+      }
+    },
+    {
+      "name": "InterestBearingConfig",
+      "description": "Enables interest-bearing functionality",
+      "config": {
+        "rate": 0.05
+      }
+    },
+    {
+      "name": "MetadataPointer",
+      "description": "Points to off-chain metadata",
+      "config": {
+        "metadataAddress": ""
+      }
+    }
+  ]
+} 

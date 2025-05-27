@@ -12,8 +12,6 @@ export const RPC_URL =
     : "https://api.devnet.solana.com";
 // Initialize connection to local Solana node
 export const connection = new web3.Connection(RPC_URL, "confirmed");
-export const METADATA_URL = process.env.METADATA_URL || 'https://your-metadata.json'
-
 // Generate keys for payer, mint authority, and mint
 export const payer = web3.Keypair.fromSecretKey(Uint8Array.from(bs58.decode(process.env.PRIVATE_KEY)));
 

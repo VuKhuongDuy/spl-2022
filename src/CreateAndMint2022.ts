@@ -1,75 +1,52 @@
-// Import necessary functions and constants from the Solana web3.js and SPL Token packages
 import {
   sendAndConfirmTransaction,
-  Connection,
   Keypair,
   SystemProgram,
   Transaction,
-  LAMPORTS_PER_SOL,
-  Cluster,
-  PublicKey,
 } from "@solana/web3.js";
 
 import {
   ExtensionType,
   createInitializeMintInstruction,
   mintTo,
-  createAccount,
   getMintLen,
-  getTransferFeeAmount,
-  unpackAccount,
   TOKEN_2022_PROGRAM_ID,
-  createInitializeTransferFeeConfigInstruction,
-  harvestWithheldTokensToMint,
-  transferCheckedWithFee,
-  withdrawWithheldTokensFromAccounts,
-  withdrawWithheldTokensFromMint,
-  getOrCreateAssociatedTokenAccount,
   createAssociatedTokenAccountIdempotent,
-  createInitializeNonTransferableMintInstruction,
+  createInitializeTransferFeeConfigInstruction,
+  createInitializeInstruction,
+  createInitializeMetadataPointerInstruction
 } from "@solana/spl-token";
 
 import {
   connection,
   generateExplorerTxUrl,
   payer,
-  revokeFreezeAuthority,
 } from "./utils";
+import supportedExtensions from "../configs/spl-extension-config.json";
+import deployConfig from "../configs/deploy.json";
+import metadata from "../configs/metadata.json";
 
 const mintAuthority = payer;
 const mintKeypair = Keypair.generate();
 const mint = mintKeypair.publicKey;
-
-// Generate keys for transfer fee config authority and withdrawal authority
 const transferFeeConfigAuthority = Keypair.generate();
 const withdrawWithheldAuthority = Keypair.generate();
-
-// Define the extensions to be used by the mint
-const extensions = [ExtensionType.TransferFeeConfig];
-// const extensions = [ExtensionType.NonTransferable];
-
-// Calculate the length of the mint
+const extensions = supportedExtensions.extensions.map(extension => ExtensionType[extension.name]);
 const mintLen = getMintLen(extensions);
 
-// Set the decimals, fee basis points, and maximum fee
 const decimals = 9;
 const feeBasisPoints = 100; // 1%
 const maxFee = BigInt(9 * Math.pow(10, decimals)); // 9 tokens
+const mintAmount = BigInt(deployConfig.amount * Math.pow(10, decimals)); // Mint 1,000,000 tokens
 
-// Define the amount to be minted and the amount to be transferred, accounting for decimals
-const mintAmount = BigInt(1_000_000_000 * Math.pow(10, decimals)); // Mint 1,000,000 tokens
+
 const transferAmount = BigInt(1_000 * Math.pow(10, decimals)); // Transfer 1,000 tokens
-
 // Calculate the fee for the transfer
 const calcFee = (transferAmount * BigInt(feeBasisPoints)) / BigInt(10_000); // expect 10 fee
 const fee = calcFee > maxFee ? maxFee : calcFee; // expect 9 fee
 
-async function main() {
-  // Step 1 - Airdrop to Payer
-  // Disable in case of mainnet
-  // const airdropSignature = await connection.requestAirdrop(payer.publicKey, 2 * LAMPORTS_PER_SOL);
-  // await connection.confirmTransaction({ signature: airdropSignature, ...(await connection.getLatestBlockhash()) });
 
+async function main() {
   // Step 2 - Create a New Token
   const mintLamports = await connection.getMinimumBalanceForRentExemption(
     mintLen
@@ -81,23 +58,43 @@ async function main() {
       space: mintLen,
       lamports: mintLamports,
       programId: TOKEN_2022_PROGRAM_ID,
-    }),
-    createInitializeTransferFeeConfigInstruction(
-      mint,
-      transferFeeConfigAuthority.publicKey,
-      withdrawWithheldAuthority.publicKey,
-      feeBasisPoints,
-      maxFee,
-      TOKEN_2022_PROGRAM_ID
-    ),
-    createInitializeMintInstruction(
-      mint,
-      decimals,
-      mintAuthority.publicKey,
-      null,
-      TOKEN_2022_PROGRAM_ID
-    )
+    })
   );
+
+  extensions.forEach(extension => {
+    switch (extension) {
+      case ExtensionType.TransferFeeConfig:
+        mintTransaction.add(
+          createInitializeTransferFeeConfigInstruction(
+            mint,
+            transferFeeConfigAuthority.publicKey,
+            withdrawWithheldAuthority.publicKey,
+            feeBasisPoints,
+            maxFee,
+            TOKEN_2022_PROGRAM_ID
+          )
+        )
+        break;
+      default:
+        break;
+    }
+  })
+
+  mintTransaction.add(
+    createInitializeMetadataPointerInstruction(mint, payer.publicKey, mint, TOKEN_2022_PROGRAM_ID),
+    createInitializeMintInstruction(mint, decimals, payer.publicKey, null, TOKEN_2022_PROGRAM_ID),
+    createInitializeInstruction({
+      programId: TOKEN_2022_PROGRAM_ID,
+      mint: mint,
+      metadata: mint,
+      name: metadata.name,
+      symbol: metadata.symbol,
+      uri: metadata.url,
+      mintAuthority: payer.publicKey,
+      updateAuthority: payer.publicKey,
+    }),
+  );
+
   const newTokenTx = await sendAndConfirmTransaction(
     connection,
     mintTransaction,
